@@ -783,8 +783,12 @@ export function UsersPage() {
                           Número de Documento *
                         </Label>
                         <Input
+                          type="number"
                           value={newUser.documento}
-                          onChange={(e) => setNewUser({ ...newUser, documento: e.target.value })}
+                          onChange={(e) => {
+                            const onlyDigits = e.target.value.replace(/\D/g, '');
+                            setNewUser({ ...newUser, documento: onlyDigits });
+                          }}
                           className={`elegante-input w-full ${showUserFormErrors && !newUser.documento ? 'border-red-500 ring-1 ring-red-500' : ''}`}
                           placeholder="Número de documento"
                         />

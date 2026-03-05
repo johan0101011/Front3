@@ -139,6 +139,8 @@ export function ClientesPage() {
   const [showEditValidation, setShowEditValidation] = useState(false);
   const [clienteGeneratedPassword, setClienteGeneratedPassword] = useState('');
   const [createInFirebase, setCreateInFirebase] = useState(true);
+  const [docDuplicateCreate, setDocDuplicateCreate] = useState(false);
+  const [docDuplicateEdit, setDocDuplicateEdit] = useState(false);
 
   const generateClientePassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -1287,13 +1289,24 @@ export function ClientesPage() {
                   Número de Documento *
                 </Label>
                 <Input
+                  type="number"
                   value={editForm.numeroDocumento}
-                  onChange={(e) => setEditForm({ ...editForm, numeroDocumento: e.target.value })}
+                  onChange={(e) => {
+                    const onlyDigits = e.target.value.replace(/\D/g, '');
+                    const next = { ...editForm, numeroDocumento: onlyDigits };
+                    setEditForm(next);
+                    setDocDuplicateEdit(clientes.some(c =>
+                      c.id !== selectedCliente?.id &&
+                      c.numeroDocumento === onlyDigits &&
+                      c.tipoDocumento === next.tipoDocumento
+                    ));
+                  }}
                   maxLength={CLIENTE_LIMITS.numeroDocumento}
                   className={`elegante-input w-full ${showEditValidation && !editForm.numeroDocumento ? 'border-red-500 ring-1 ring-red-500' : ''}`}
                   placeholder="Número de documento"
                 />
                 {showEditValidation && !editForm.numeroDocumento && <p className="text-xs text-red-400">Este campo es obligatorio.</p>}
+                {docDuplicateEdit && <p className="text-xs text-red-500 mt-1">No se puede crear un usuario con un documento existente.</p>}
               </div>
               <div className="space-y-2">
                 <Label className="text-white-primary flex items-center gap-2">
@@ -1504,13 +1517,23 @@ export function ClientesPage() {
                   Número de Documento *
                 </Label>
                 <Input
+                  type="number"
                   value={createForm.numeroDocumento}
-                  onChange={(e) => setCreateForm({ ...createForm, numeroDocumento: e.target.value })}
+                  onChange={(e) => {
+                    const onlyDigits = e.target.value.replace(/\D/g, '');
+                    const next = { ...createForm, numeroDocumento: onlyDigits };
+                    setCreateForm(next);
+                    setDocDuplicateCreate(clientes.some(c =>
+                      c.numeroDocumento === onlyDigits &&
+                      c.tipoDocumento === next.tipoDocumento
+                    ));
+                  }}
                   maxLength={CLIENTE_LIMITS.numeroDocumento}
                   className={`elegante-input w-full ${showCreateValidation && !createForm.numeroDocumento ? 'border-red-500 ring-1 ring-red-500' : ''}`}
                   placeholder="Número de documento"
                 />
                 {showCreateValidation && !createForm.numeroDocumento && <p className="text-xs text-red-400">Este campo es obligatorio.</p>}
+                {docDuplicateCreate && <p className="text-xs text-red-500 mt-1">No se puede crear un usuario con un documento existente.</p>}
               </div>
               <div className="space-y-2">
                 <Label className="text-white-primary flex items-center gap-2">
@@ -1641,6 +1664,7 @@ export function ClientesPage() {
               <button
                 onClick={handleCreateCliente}
                 className="elegante-button-primary"
+                disabled={docDuplicateCreate}
               >
                 Crear Cliente
               </button>

@@ -859,9 +859,6 @@ export function VentasPage() {
       }));
     }
 
-    setProductoSeleccionado('');
-    setCantidadProducto(0);
-    setCantidadProductoInput('');
     setShowAddProductoErrors(false);
     setShowVentaFormErrors(false);
   };
@@ -2009,7 +2006,13 @@ export function VentasPage() {
                               <CreditCard className="w-4 h-4 text-orange-primary" />
                               Método de Pago *
                             </Label>
-                            <Select value={nuevaVenta.metodoPago} onValueChange={(value) => setNuevaVenta({ ...nuevaVenta, metodoPago: value })}>
+                            <Select
+                              value={nuevaVenta.metodoPago}
+                              onValueChange={(value) => {
+                                const saldo = clientesDisponibles.find(c => c.id === Number(nuevaVenta.clienteId))?.saldoAFavor || 0;
+                                setNuevaVenta({ ...nuevaVenta, metodoPago: value, usarSaldoAFavor: value === 'Saldo' && saldo > 0 });
+                              }}
+                            >
                               <SelectTrigger className={`elegante-input ${showVentaFormErrors && !nuevaVenta.metodoPago ? `border-red-500 ring-1 ring-red-500 ${shakeClass}` : ''}`}>
                                 <SelectValue placeholder="Selecciona el método de pago" />
                               </SelectTrigger>
@@ -2017,11 +2020,29 @@ export function VentasPage() {
                                 <SelectItem value="Efectivo">Efectivo</SelectItem>
                                 <SelectItem value="Tarjeta">Tarjeta</SelectItem>
                                 <SelectItem value="Transferencia">Transferencia</SelectItem>
+                                <SelectItem
+                                  value="Saldo"
+                                  disabled={(clientesDisponibles.find(c => c.id === Number(nuevaVenta.clienteId))?.saldoAFavor || 0) <= 0}
+                                >
+                                  Saldo
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                             {showVentaFormErrors && !nuevaVenta.metodoPago && (
                               <p className="text-xs text-red-400">Este campo es obligatorio.</p>
                             )}
+                            <div className="space-y-1 mt-2">
+                              <Label className="text-white-primary flex items-center gap-2">
+                                <DollarSign className="w-4 h-4 text-orange-primary" />
+                                SaldoDisp.
+                              </Label>
+                              <Input
+                                value={`$${formatCurrency(clientesDisponibles.find(c => c.id === Number(nuevaVenta.clienteId))?.saldoAFavor || 0)}`}
+                                disabled
+                                readOnly
+                                className="elegante-input bg-gray-medium"
+                              />
+                            </div>
                           </div>
                         </div>
 
@@ -2506,6 +2527,10 @@ export function VentasPage() {
                           <button
                             onClick={handleCreateVenta}
                             className="elegante-button-primary"
+                            disabled={
+                              nuevaVenta.metodoPago === 'Saldo' &&
+                              ((clientesDisponibles.find(c => c.id === Number(nuevaVenta.clienteId))?.saldoAFavor || 0) <= 0)
+                            }
                           >
                             Registrar Venta
                           </button>
@@ -2553,34 +2578,36 @@ export function VentasPage() {
                     </div>
                   </div>
 
-                  {/* Lado derecho: resumen de comisiones + contador */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    {barberoSeleccionado !== VALOR_TODOS_BARBEROS && (
-                      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                        <span className="px-3 py-1 rounded-full bg-gray-darker border border-gray-dark text-gray-lightest">
-                          Total servicios:{" "}
-                          <span className="text-orange-primary font-semibold">
-                            ${formatCurrency(totalServiciosFiltrados)}
+                  {/* Resumen oculto por requerimiento */}
+                  {false && (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      {barberoSeleccionado !== VALOR_TODOS_BARBEROS && (
+                        <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                          <span className="px-3 py-1 rounded-full bg-gray-darker border border-gray-dark text-gray-lightest">
+                            Total servicios:{" "}
+                            <span className="text-orange-primary font-semibold">
+                              ${formatCurrency(totalServiciosFiltrados)}
+                            </span>
                           </span>
-                        </span>
-                        <span className="px-3 py-1 rounded-full bg-gray-darker border border-gray-dark text-gray-lightest">
-                          60% Barbero:{" "}
-                          <span className="text-green-400 font-semibold">
-                            ${formatCurrency(totalBarbero)}
+                          <span className="px-3 py-1 rounded-full bg-gray-darker border border-gray-dark text-gray-lightest">
+                            60% Barbero:{" "}
+                            <span className="text-green-400 font-semibold">
+                              ${formatCurrency(totalBarbero)}
+                            </span>
                           </span>
-                        </span>
-                        <span className="px-3 py-1 rounded-full bg-gray-darker border border-gray-dark text-gray-lightest">
-                          40% Barbería:{" "}
-                          <span className="text-blue-300 font-semibold">
-                            ${formatCurrency(totalBarberia)}
+                          <span className="px-3 py-1 rounded-full bg-gray-darker border border-gray-dark text-gray-lightest">
+                            40% Barbería:{" "}
+                            <span className="text-blue-300 font-semibold">
+                              ${formatCurrency(totalBarberia)}
+                            </span>
                           </span>
-                        </span>
+                        </div>
+                      )}
+                      <div className="text-xs sm:text-sm text-gray-lightest sm:ml-2">
+                        Mostrando {displayedVentas.length} de {filteredVentas.length} ventas
                       </div>
-                    )}
-                    <div className="text-xs sm:text-sm text-gray-lightest sm:ml-2">
-                      Mostrando {displayedVentas.length} de {filteredVentas.length} ventas
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
